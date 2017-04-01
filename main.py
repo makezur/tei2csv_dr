@@ -230,7 +230,6 @@ def table_to_csv(cvs_name, table, persons_list, persons_dict):
     type_string = "Undirected"
     csv_file = open(cvs_name, "w")
 
-    # мб тут параметры родить какие
     csv_writer = csv.writer(csv_file)
 
     csv_writer.writerow(header)
