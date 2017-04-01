@@ -4,6 +4,8 @@ import numpy as np
 
 from bs4 import BeautifulSoup
 
+from os import walk
+
 
 def print_if(data, verbose=False):
     if verbose:
@@ -45,9 +47,29 @@ def get_persons_dict(parser, prefix="#"):
 
 
 def get_speaker_data(speaker_tag):
-    if "who" in speaker_tag.attrs and speaker_tag.find("p"):
-        return speaker_tag["who"], speaker_tag.find("p").string.strip()
+    if "who" in speaker_tag.attrs:
+        if speaker_tag.contents is None:
+            print(speaker_tag)
+            raise Exception("Parse error", "len error")
+
+        stop_list_names = {"speaker", "stage"}
+
+        speech_text = str()
+        for child_tag in speaker_tag.contents:
+            if child_tag.name not in stop_list_names:
+                if child_tag.name == "p":
+                    speech_text += " " + child_tag.string.strip()
+                else:
+                    if len(str(child_tag).strip()) == 0:
+                        continue
+
+                    print("check me: adding non flat speech")
+                    print(child_tag)
+                    speech_text += " " + str(child_tag)
+
+        return speaker_tag["who"], speech_text
     else:
+        print(speaker_tag)
         raise Exception("Parse error", "sp tag doesn't have who attr")
 
 
@@ -220,24 +242,34 @@ def table_to_csv(cvs_name, table, persons_list, persons_dict):
 
     csv_file.close()
 
-read_file = open("test.xml", "r")
-text = read_file.read()
-soup = BeautifulSoup(text, "lxml")
 
-verbose = False
+def tei_to_csv(input_filename, output_filename, verbose=False):
+    read_file = open(input_filename, "r")
+    text = read_file.read()
+    soup = BeautifulSoup(text, "lxml")
 
-persons_dict = get_persons_dict(soup)
-persons_list = list(persons_dict.keys())
-persons_inverse_dict = inverse_dict(persons_list)
+    persons_dict = get_persons_dict(soup)
+    persons_list = list(persons_dict.keys())
+    persons_inverse_dict = inverse_dict(persons_list)
 
-print_if(persons_dict, verbose)
+    print_if(persons_dict, verbose)
+    acts = div_by_acts_and_scenes(soup, verbose)
 
-acts = div_by_acts_and_scenes(soup, verbose)
+    score_table = make_score_table(persons_list)
+    stats = compute_stats(acts)
+    make_score(score_table, acts, stats, persons_list, persons_dict, persons_inverse_dict)
 
-score_table = make_score_table(persons_list)
+    table_to_csv(output_filename, score_table, persons_list, persons_dict)
 
-stats = compute_stats(acts)
 
-make_score(score_table, acts, stats, persons_list, persons_dict, persons_inverse_dict)
+def parse_tei_folder(input_folder, output_folder, verbose=False):
+    for path, dirs, filenames in walk(input_folder):
+        for filename in filenames:
+            if filename.endswith(".xml"):
+                new_filename = filename[:-4] + ".csv"
 
-table_to_csv("test.csv", score_table, persons_list, persons_dict)
+                print_if(["converting: ", path + "/" + filename, output_folder + "/" + new_filename], verbose)
+                tei_to_csv(path + "/" + filename, output_folder + "/" + new_filename, verbose)
+
+if __name__ == "__main__":
+    parse_tei_folder("./xml_folder", "./csv_folder", verbose=False)
