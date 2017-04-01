@@ -201,7 +201,8 @@ def compute_stats(acts):
     return acts_stat
 
 # make_score function computes the weights of relations in our graph based on the generated stats
-# the current formula is just the pairwise sum of speeches amount in each scene
+# the current formula is just the  sum of speeches amount in each
+# scene between two persons if both of them were in this scene
 # but our plain, i guess, is to try different scoring methods
 
 
