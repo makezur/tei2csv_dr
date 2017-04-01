@@ -20,6 +20,8 @@ def inverse_dict(list_to_inverse):
 
     return result_dict
 
+# dictionary for TEI names and real names correspondence
+
 
 def get_persons_dict(parser, prefix="#"):
     persons = dict()
@@ -70,6 +72,7 @@ def get_speaker_data(speaker_tag):
         return speaker_tag["who"], speech_text
     else:
         print(speaker_tag)
+        print(speaker_tag.parent)
         raise Exception("Parse error", "sp tag doesn't have who attr")
 
 
@@ -196,6 +199,10 @@ def compute_stats(acts):
         current_act_stat = list()
 
     return acts_stat
+
+# make_score function computes the weights of relations in our graph based on the generated stats
+# the current formula is just the pairwise sum of speeches amount in each scene
+# but our plain, i guess, is to try different scoring methods
 
 
 def make_score(score_table, acts, stats, persons_list, persons_dict, persons_inverse_dict):
